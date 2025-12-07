@@ -10,12 +10,12 @@ import {
   CardAction,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
 import { Fragment } from "react";
 import MetaData from "@/components/metadata";
+import { toast } from "sonner";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -33,11 +33,19 @@ const LoginPage = () => {
     },
     onSuccess: (data) => {
       localStorage.setItem("token", data.token);
-      alert("Login Berhasil!");
+      toast.success(data.status, {
+        description: data.message,
+        position: "top-center",
+        richColors: true,
+      });
       navigate("/");
     },
     onError: (error) => {
-      alert(error.response?.data?.message || "Login Gagal");
+      toast.error(error.response.statusText, {
+        description: error.response.data.message,
+        position: "top-center",
+        richColors: true,
+      });
     },
   });
 

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/card";
 import { X, Upload, Loader2, ImagePlus } from "lucide-react";
 import MetaData from "@/components/metadata";
+import { toast } from "sonner";
 
 const ConfirmationPage = () => {
   const { id_barang } = useParams();
@@ -76,12 +77,20 @@ const ConfirmationPage = () => {
       );
       return response.data;
     },
-    onSuccess: () => {
-      alert("Konfirmasi pengambilan barang berhasil!");
+    onSuccess: (data) => {
+      toast.success(data.status, {
+        description: data.message,
+        position: "top-center",
+        richColors: true,
+      });
       navigate("/");
     },
     onError: (error) => {
-      alert(error.response?.data?.message || "Gagal melakukan konfirmasi.");
+      toast.error(error.response.statusText || 500, {
+        description: error.response.data.message,
+        position: "top-center",
+        richColors: true,
+      });
     },
   });
 
@@ -263,7 +272,7 @@ const ConfirmationPage = () => {
               <div className="pt-4">
                 <Button
                   type="submit"
-                  className="w-full bg-linear-to-r from-purple-600 to-pink-600 hover:opacity-90 transition-opacity text-white"
+                  className="w-full bg-linear-to-r from-gray-600 to-stone-600 hover:opacity-90 transition-opacity text-white"
                   disabled={mutation.isPending}
                 >
                   {mutation.isPending ? (

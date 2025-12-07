@@ -11,13 +11,10 @@ import {
 } from "lucide-react";
 import api from "@/lib/axios";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
-export default function ReportModal({
-  isOpen,
-  onClose,
-  dataSatpam,
-  onSuccess,
-}) {
+export default function ReportModal({ isOpen, onClose, dataSatpam }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     judul_laporan: "",
@@ -30,8 +27,8 @@ export default function ReportModal({
     id_satpam: "",
   });
   const navigate = useNavigate();
-
   const [reportType, setReportType] = useState("hilang");
+  const queryClient = useQueryClient();
 
   if (!isOpen) return null;
 
@@ -39,7 +36,7 @@ export default function ReportModal({
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert("Ukuran file maksimal 5MB");
+        toast.warning("Ukuran file maksimal 5MB!");
         return;
       }
 
@@ -71,15 +68,20 @@ export default function ReportModal({
         formDataToSend.append("id_satpam", formData.id_satpam);
       }
 
-      await api.post("/barang", formDataToSend, {
+      const response = await api.post("/barang", formDataToSend, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      alert("Laporan berhasil dikirim! Tim kami akan segera memverifikasi.");
+      await queryClient.invalidateQueries({ queryKey: ["barang-list"] });
+
+      toast.success(response.statusText, {
+        description: response.data.message,
+        position: "top-center",
+        richColors: true,
+      });
       onClose();
-      onSuccess(); // Panggil callback sukses dari parent
 
       setFormData({
         judul_laporan: "",
@@ -92,20 +94,23 @@ export default function ReportModal({
         id_satpam: "",
       });
       setReportType("hilang");
-
-      window.location.reload();
     } catch (error) {
       if (error.response && error.response.status === 403) {
-        alert("Akses ditolak. Silakan login kembali untuk melanjutkan.");
+        toast(error.response.status, {
+          description: error.response.message,
+          position: "top-center",
+          richColors: true,
+        });
         localStorage.removeItem("token");
         navigate("/login");
         return;
       }
 
-      alert(
-        error?.response?.data?.message ||
-          "Gagal mengirim laporan. Silakan coba lagi."
-      );
+      toast(error.response.status, {
+        description: error.response.message,
+        position: "top-center",
+        richColors: true,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -129,7 +134,6 @@ export default function ReportModal({
 
   return createPortal(
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-100 p-4 overflow-y-auto">
-      {/* ... (Konten Modal Lapor Tetap Sama) ... */}
       <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[95vh] overflow-y-auto shadow-2xl my-8 animate-in fade-in zoom-in duration-300">
         {/* Modal Header */}
         <div className="sticky top-0 bg-linear-to-r from-stone-600 to-teal-600 px-6 sm:px-8 py-5 sm:py-6 rounded-t-3xl z-10">
@@ -321,7 +325,7 @@ export default function ReportModal({
                 onChange={(e) =>
                   setFormData({ ...formData, deskripsi: e.target.value })
                 }
-                placeholder="Ceritakan lebih detail tentang barang ini..."
+                placeholder="Tolong ceritakan lebih detail tentang barang ini, bisa tentang kejadian, tempat terakhir, jam terakhir, dll..."
                 rows={4}
                 className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-stone-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed resize-none"
                 disabled={isSubmitting}

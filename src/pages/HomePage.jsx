@@ -28,11 +28,6 @@ export default function LostAndFoundHome() {
 
   const { formatTimeAgo } = useFormatDate();
 
-  const handleSuccessReport = () => {
-    setReportModalOpen(false);
-    window.location.reload();
-  };
-
   const {
     data: itemList = [],
     isLoading: isLoadingBarang,
@@ -146,11 +141,14 @@ export default function LostAndFoundHome() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
           <div className="text-center mb-8">
             <h2 className="text-3xl sm:text-5xl font-bold text-gray-900 mb-4">
-              Kehilangan Sesuatu? 🧐
+              Lost and Found{" "}
+              <span className="bg-linear-to-r from-red-800 via-red-400  to-red-300/80 bg-clip-text text-transparent">
+                KEMA UKRI
+              </span>
             </h2>
             <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
               Platform terpercaya untuk menemukan barang hilang atau melaporkan
-              barang temuan
+              barang temuan area Universitas Kebangsaan Republik Indonesia
             </p>
           </div>
 
@@ -318,7 +316,6 @@ export default function LostAndFoundHome() {
           isOpen={isReportModalOpen}
           onClose={() => setReportModalOpen(false)}
           dataSatpam={dataSatpam}
-          onSuccess={handleSuccessReport}
         />
       </div>
     </Fragment>

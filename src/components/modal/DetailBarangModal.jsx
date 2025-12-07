@@ -11,15 +11,18 @@ import {
   Phone,
   ImageOff,
   Check,
-  Loader,
 } from "lucide-react";
 import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { Button } from "../ui/button";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { jwtDecode } from "jwt-decode";
 
 const DetailBarangModal = ({ selectedItem, onClose }) => {
   const { formatTimeAgo, formatDate } = useFormatDate();
+  const queryClient = useQueryClient();
+  const decode = jwtDecode(localStorage.getItem("token"));
 
   useEffect(() => {
     if (selectedItem) {
@@ -43,14 +46,32 @@ const DetailBarangModal = ({ selectedItem, onClose }) => {
         status: "sudah selesai",
         tipe_laporan: "selesai",
       };
-      await api.post(`/barang/ditemukan`, data);
 
-      alert("Konfirmasi berhasil dikirim.");
+      const response = await api.post(`/barang/ditemukan`, data);
+
+      await queryClient.invalidateQueries({ queryKey: ["barang-list"] });
+
+      toast.success(response.statusText, {
+        description: response.data.message,
+        richColors: true,
+        position: "top-center",
+      });
+
       onClose();
-
-      window.location.reload();
     } catch (error) {
-      alert(` Error: ${error.response.data.message}`);
+      if (error.status == 403) {
+        toast.warning("Akses ditolak!", {
+          description: "Kamu tidak berhak mengkonfirmasi barang ini!",
+          position: "top-center",
+          richColors: true,
+        });
+      } else {
+        toast.error(error.message, {
+          description: error.response.data.message,
+          position: "top-center",
+          richColors: true,
+        });
+      }
     }
   };
 
@@ -169,15 +190,16 @@ const DetailBarangModal = ({ selectedItem, onClose }) => {
               Hubungi Pelapor via WhatsApp
             </Link>
             {selectedItem.tipe_laporan === "hilang" && (
-              <Button
+              <Link
                 onClick={handleSubmit}
-                className="bg-linear-to-r  from-gray-600 to-stone-600 text-white px-2 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all flex items-center justify-center text-xs"
+                className="w-full bg-linear-to-r from-gray-600 to-stone-600 text-white px-2 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all flex items-center justify-center text-xs"
               >
                 <Check className="w-5 h-5 mr-2" />
                 Konfirmasi sudah ditemukan
-              </Button>
+              </Link>
             )}
-            {selectedItem.tipe_laporan === "ditemukan" && (
+            {selectedItem.tipe_laporan === "ditemukan" &&
+            decode.role === "Satpam" ? (
               <Link
                 to={`${selectedItem.id_barang}/confirmation`}
                 target="_blank"
@@ -187,6 +209,8 @@ const DetailBarangModal = ({ selectedItem, onClose }) => {
                 <Check className="w-5 h-5 mr-2" />
                 Konfirmasi ambil barang
               </Link>
+            ) : (
+              <></>
             )}
           </div>
         </div>

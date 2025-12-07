@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Fragment } from "react";
 import MetaData from "@/components/metadata";
+import { toast } from "sonner";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -27,15 +28,24 @@ const RegisterPage = () => {
   const registerMutation = useMutation({
     mutationFn: async (data) => {
       const response = await api.post("/register", data);
+
       return response.data;
     },
     onSuccess: (data) => {
       localStorage.setItem("token", data.token);
-      alert("Register Berhasil!");
+      toast.success(data.response.status, {
+        description: data.message,
+        position: "top-center",
+        richColors: true,
+      });
       navigate("/login");
     },
     onError: (error) => {
-      alert(error.response?.data?.message || "Register Gagal");
+      toast.success(error.statusText, {
+        description: error.response.data.message,
+        position: "top-center",
+        richColors: true,
+      });
     },
   });
 
