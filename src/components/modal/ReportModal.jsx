@@ -101,7 +101,7 @@ export default function ReportModal({
         navigate("/login");
         return;
       }
-      console.error("Error submitting report:", error);
+
       alert(
         error?.response?.data?.message ||
           "Gagal mengirim laporan. Silakan coba lagi."
