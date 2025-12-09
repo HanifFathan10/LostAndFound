@@ -22,7 +22,9 @@ import { jwtDecode } from "jwt-decode";
 const DetailBarangModal = ({ selectedItem, onClose }) => {
   const { formatTimeAgo, formatDate } = useFormatDate();
   const queryClient = useQueryClient();
-  const decode = jwtDecode(localStorage.getItem("token"));
+
+  const token = localStorage.getItem("token");
+  const user = token && jwtDecode(token);
 
   useEffect(() => {
     if (selectedItem) {
@@ -199,7 +201,7 @@ const DetailBarangModal = ({ selectedItem, onClose }) => {
               </Link>
             )}
             {selectedItem.tipe_laporan === "ditemukan" &&
-            decode.role === "Satpam" ? (
+            user.role === "Satpam" ? (
               <Link
                 to={`${selectedItem.id_barang}/confirmation`}
                 target="_blank"
