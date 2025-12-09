@@ -149,7 +149,7 @@ export default function ReportModal({ isOpen, onClose, dataSatpam }) {
             <button
               onClick={closeModal}
               disabled={isSubmitting}
-              className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-10 h-10 cursor-pointer bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <X className="w-5 h-5 text-white" />
             </button>
@@ -301,7 +301,7 @@ export default function ReportModal({ isOpen, onClose, dataSatpam }) {
             <div className="relative">
               <Calendar className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
-                type="date"
+                type="datetime-local"
                 value={formData.tanggal}
                 onChange={(e) =>
                   setFormData({ ...formData, tanggal: e.target.value })
@@ -343,6 +343,7 @@ export default function ReportModal({ isOpen, onClose, dataSatpam }) {
                 <select
                   name="id_satpam"
                   id="id_satpam"
+                  key="id_satpam"
                   onChange={(e) =>
                     setFormData({ ...formData, id_satpam: e.target.value })
                   }
@@ -381,7 +382,7 @@ export default function ReportModal({ isOpen, onClose, dataSatpam }) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 bg-linear-to-r from-stone-600 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg hover:scale-105 transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 bg-linear-to-r from-stone-600 to-teal-600 text-white rounded-xl font-medium hover:shadow-lg hover:scale-105 transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {isSubmitting ? (
               <>

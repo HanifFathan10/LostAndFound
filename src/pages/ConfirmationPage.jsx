@@ -272,7 +272,7 @@ const ConfirmationPage = () => {
               <div className="pt-4">
                 <Button
                   type="submit"
-                  className="w-full bg-linear-to-r from-gray-600 to-stone-600 hover:opacity-90 transition-opacity text-white"
+                  className="w-full bg-linear-to-r from-gray-600 to-stone-600 hover:opacity-90 transition-opacity text-white cursor-pointer"
                   disabled={mutation.isPending}
                 >
                   {mutation.isPending ? (

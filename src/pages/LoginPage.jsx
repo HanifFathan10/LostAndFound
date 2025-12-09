@@ -33,8 +33,7 @@ const LoginPage = () => {
     },
     onSuccess: (data) => {
       localStorage.setItem("token", data.token);
-      toast.success(data.status, {
-        description: data.message,
+      toast.success(data.message, {
         position: "top-center",
         richColors: true,
       });
@@ -62,15 +61,17 @@ const LoginPage = () => {
         url=""
       />
 
-      <div className="flex h-screen items-center justify-center bg-gray-100 p-4">
-        {/* Menggunakan Card Shadcn */}
+      <div className="flex h-screen items-center justify-center bg-gray-100 p-4 font-sora">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="text-2xl text-center">
-              Lost & Found KEMA UKRI
+              Lost & Found{" "}
+              <span className="bg-linear-to-r from-red-800 via-red-400  to-red-300/80 bg-clip-text text-transparent">
+                KEMA UKRI
+              </span>
             </CardTitle>
             <CardDescription className="text-center">
-              Selamat datang di aplikasi Lost & Found KEMA UKRI. Silakan masuk
+              Selamat datang di aplikasi Lost & Found KEMA UKRI Silakan masuk
               untuk melanjutkan.
             </CardDescription>
           </CardHeader>
@@ -82,7 +83,7 @@ const LoginPage = () => {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="nama@contoh.com"
+                  placeholder="nama-elu@lostandfound.com"
                   {...register("email", {
                     required: "Email wajib diisi",
                     pattern: {
@@ -103,7 +104,7 @@ const LoginPage = () => {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="******"
+                  placeholder="********"
                   {...register("password", {
                     required: "Password wajib diisi",
                     minLength: {
@@ -121,7 +122,7 @@ const LoginPage = () => {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full cursor-pointer bg-linear-to-r from-emerald-600 to-teal-600 hover:shadow-lg hover:scale-105 transition-all duration-200"
                 disabled={loginMutation.isPending}
               >
                 {loginMutation.isPending ? "Memuat..." : "Masuk"}

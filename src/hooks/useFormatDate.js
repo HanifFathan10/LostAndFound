@@ -3,55 +3,70 @@ import { useCallback } from "react";
 export function useFormatDate() {
   const LOCALE = "id-ID";
 
-  const formatDate = useCallback((dateString) => {
+  // 1. Jam dan tanggal kejadian
+  const formatDateTime = useCallback((dateString) => {
     if (!dateString) return "-";
 
     const date = new Date(dateString);
-
     if (isNaN(date.getTime())) return "Tanggal tidak valid";
 
     return new Intl.DateTimeFormat(LOCALE, {
       day: "numeric",
       month: "long",
       year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
     }).format(date);
   }, []);
 
-  const formatTimeAgo = useCallback((dateString) => {
-    if (!dateString) return "-";
+  // 2. Berapa jam/hari yang lalu
+  const formatTimeAgo = useCallback(
+    (dateString) => {
+      if (!dateString) return "-";
 
-    const date = new Date(dateString);
-    const now = new Date();
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "Tanggal tidak valid";
 
-    if (isNaN(date.getTime())) return "-";
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
 
-    const diffInSeconds = Math.floor((now - date) / 1000);
+      if (diffMins < 1) return "Baru saja";
+      if (diffMins < 60) return `${diffMins} menit yang lalu`;
+      if (diffHours < 24) return `${diffHours} jam yang lalu`;
+      if (diffDays < 7) return `${diffDays} hari yang lalu`;
 
-    if (diffInSeconds < 60) {
-      return "Baru saja";
-    }
+      return new Intl.DateTimeFormat(LOCALE, {
+        hour: "2-digit",
+        minute: "2-digit",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        hour12: false,
+      }).format(date);
+    },
+    [LOCALE]
+  );
 
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes} menit yang lalu`;
-    }
+  // 3. Tanggal saja
+  const formatDate = useCallback(
+    (dateString) => {
+      if (!dateString) return "-";
 
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) {
-      return `${diffInHours} jam yang lalu`;
-    }
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "Tanggal tidak valid";
 
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) {
-      return `${diffInDays} hari yang lalu`;
-    }
+      return new Intl.DateTimeFormat(LOCALE, {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(date);
+    },
+    [LOCALE]
+  );
 
-    return new Intl.DateTimeFormat(LOCALE, {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }).format(date);
-  }, []);
-
-  return { formatDate, formatTimeAgo };
+  return { formatDateTime, formatTimeAgo, formatDate };
 }

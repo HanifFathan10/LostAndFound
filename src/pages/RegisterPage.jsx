@@ -32,8 +32,7 @@ const RegisterPage = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      localStorage.setItem("token", data.token);
-      toast.success(data.response.status, {
+      toast.success("Berhasil daftar akun!", {
         description: data.message,
         position: "top-center",
         richColors: true,
@@ -41,7 +40,7 @@ const RegisterPage = () => {
       navigate("/login");
     },
     onError: (error) => {
-      toast.success(error.statusText, {
+      toast.error(error.statusText, {
         description: error.response.data.message,
         position: "top-center",
         richColors: true,
@@ -62,15 +61,14 @@ const RegisterPage = () => {
         image=""
         url=""
       />
-      <div className="flex h-screen items-center justify-center bg-gray-100 p-4">
+      <div className="flex h-screen items-center justify-center bg-gray-100 p-4 font-sora">
         {/* Menggunakan Card Shadcn */}
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">
-              Selamat Datang
-            </CardTitle>
+            <CardTitle className="text-2xl text-center">DAFTAR AKUN</CardTitle>
             <CardDescription className="text-center">
-              Isi data diri untuk mendaftar.
+              <h3>Silahkan masukan data diri anda</h3>
+              <span>(Gunakan NIK jika anda bukan mahasiswa)</span>
             </CardDescription>
           </CardHeader>
 
@@ -201,10 +199,9 @@ const RegisterPage = () => {
                 )}
               </div>
 
-              {/* Tombol Daftar */}
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full cursor-pointer bg-linear-to-r from-emerald-600 to-teal-600 hover:shadow-lg hover:scale-105 transition-all duration-200"
                 disabled={registerMutation.isPending}
               >
                 {registerMutation.isPending ? "Memuat..." : "Daftar"}

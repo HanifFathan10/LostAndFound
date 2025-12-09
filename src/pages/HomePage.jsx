@@ -9,8 +9,10 @@ import {
   ImageOff,
   Loader,
   Plus,
+  User2Icon,
+  LucideLogOut,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import api from "@/lib/axios";
 import { getImageUrl } from "@/hooks/getImageUrl";
@@ -19,6 +21,9 @@ import { useFormatDate } from "@/hooks/useFormatDate";
 import ReportModal from "@/components/modal/ReportModal";
 import DetailBarangModal from "@/components/modal/DetailBarangModal";
 import MetaData from "@/components/metadata";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 export default function LostAndFoundHome() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -26,7 +31,12 @@ export default function LostAndFoundHome() {
   const [isReportModalOpen, setReportModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  const { formatTimeAgo } = useFormatDate();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const { formatDate } = useFormatDate();
+
+  const token = localStorage.getItem("token");
 
   const {
     data: itemList = [],
@@ -54,6 +64,31 @@ export default function LostAndFoundHome() {
       return response.data.data || [];
     },
     staleTime: 1000 * 60 * 5,
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await api.post("/logout");
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Berhasil logout!", {
+        richColors: true,
+        position: "top-center",
+      });
+
+      queryClient.clear();
+
+      localStorage.removeItem("token");
+
+      navigate("/");
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Gagal logout", {
+        richColors: true,
+        position: "top-center",
+      });
+    },
   });
 
   const filteredItems = itemList.filter((item) => {
@@ -110,7 +145,7 @@ export default function LostAndFoundHome() {
         image="../assets/images/banner.png"
       />
 
-      <div className="font-sora min-h-screen bg-linear-to-br from-indigo-50 via-stone-50 to-teal-50 pb-20">
+      <div className="relative font-sora min-h-screen bg-linear-to-br from-indigo-50 via-stone-50 to-teal-50 pb-20">
         {/* Header */}
         <header className="bg-white/80 backdrop-blur-lg border-b border-stone-100 sticky top-0 z-50 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
@@ -127,17 +162,34 @@ export default function LostAndFoundHome() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => setReportModalOpen(true)}
-              className="px-4 sm:px-6 py-2 flex justify-center items-center cursor-pointer sm:py-2.5 bg-linear-to-r from-stone-600 to-teal-600 text-white text-sm sm:text-base rounded-full font-medium hover:shadow-lg hover:scale-105 transition-all duration-200"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Lapor Barang
-            </button>
+
+            {token ? (
+              <Button
+                onClick={() => logoutMutation.mutate()}
+                disabled={logoutMutation.isPending}
+                className="px-4 py-2 has-[>svg]:px-6 flex justify-center items-center cursor-pointer sm:py-6 sm:p-6 bg-linear-to-r from-stone-600 to-teal-600 text-white text-sm sm:text-base rounded-full font-medium hover:shadow-lg hover:scale-105 transition-all duration-200"
+              >
+                {logoutMutation.isPending ? (
+                  <span>Logout...</span>
+                ) : (
+                  <>
+                    <LucideLogOut className="w-5 h-5 mr-2" />
+                    Logout
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Link
+                to="/login"
+                className="px-4 sm:px-6 py-2 flex justify-center items-center cursor-pointer sm:py-2.5 bg-linear-to-r from-stone-600 to-teal-600 text-white text-sm sm:text-base rounded-full font-medium hover:shadow-lg hover:scale-105 transition-all duration-200"
+              >
+                <User2Icon className="w-5 h-5 mr-2" />
+                Login
+              </Link>
+            )}
           </div>
         </header>
 
-        {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
           <div className="text-center mb-8">
             <h2 className="text-3xl sm:text-5xl font-bold text-gray-900 mb-4">
@@ -184,7 +236,7 @@ export default function LostAndFoundHome() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 sm:px-8 py-2 sm:py-3 rounded-xl font-medium text-sm sm:text-base transition-all duration-200 ${
+                  className={`px-4 sm:px-8 py-2 sm:py-3 cursor-pointer rounded-xl font-medium text-sm sm:text-base transition-all duration-200 ${
                     activeTab === tab.id
                       ? "bg-linear-to-r from-stone-600 to-teal-600 text-white shadow-md"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
@@ -198,87 +250,90 @@ export default function LostAndFoundHome() {
 
           {/* Items Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredItems.map((item) => (
-              <div
-                key={item.id_barang || item.id}
-                onClick={() => setSelectedItem(item)}
-                className={`group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:-translate-y-1 cursor-pointer flex flex-col h-full ${
-                  item.status === "sudah selesai" ? "opacity-60" : ""
-                }`}
-              >
-                {/* Image Section */}
-                <div className="relative h-56 overflow-hidden bg-gray-100">
-                  {item.foto && item.foto.length > 0 ? (
-                    <img
-                      src={getImageUrl(item.foto)}
-                      alt={item.judul_laporan}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src =
-                          "https://via.placeholder.com/400x300?text=No+Image";
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                      <ImageOff className="w-12 h-12 mb-2" />
-                      <span className="text-sm">Tidak ada gambar</span>
-                    </div>
-                  )}
-
-                  <div className="absolute top-3 left-3">
-                    <span
-                      className={`px-4 py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-md ${
-                        item.tipe_laporan === "hilang"
-                          ? "bg-red-500/90 text-white"
-                          : "bg-emerald-500/90 text-white"
-                      }`}
-                    >
-                      {item.tipe_laporan === "hilang" ? "DICARI" : "DITEMUKAN"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Card Content */}
-                <div className="p-5 flex flex-col grow">
-                  <div className="mb-4 grow">
-                    <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-2 group-hover:text-stone-600 transition-colors">
-                      {item.judul_laporan}
-                    </h3>
-                    <div className="space-y-2">
-                      <div className="flex items-start text-gray-600 text-sm">
-                        <MapPin className="w-4 h-4 mr-2 text-stone-500 shrink-0 mt-0.5" />
-                        <span className="line-clamp-1">
-                          {item.lokasi || "Lokasi tidak tersedia"}
-                        </span>
+            {filteredItems.map((item) => {
+              return (
+                <div
+                  key={item.id_barang || item.id}
+                  onClick={() => setSelectedItem(item)}
+                  className={`group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:-translate-y-1 cursor-pointer flex flex-col h-full ${
+                    item.status === "sudah selesai" ? "opacity-60" : ""
+                  }`}
+                >
+                  {/* Image Section */}
+                  <div className="relative h-56 overflow-hidden bg-gray-100">
+                    {item.foto && item.foto.length > 0 ? (
+                      <img
+                        src={getImageUrl(item.foto)}
+                        alt={item.judul_laporan}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src =
+                            "https://via.placeholder.com/400x300?text=No+Image";
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                        <ImageOff className="w-12 h-12 mb-2" />
+                        <span className="text-sm">Tidak ada gambar</span>
                       </div>
-                      <div className="flex items-center text-gray-500 text-sm">
-                        <Clock className="w-4 h-4 mr-2 shrink-0 text-gray-400" />
-                        <span>
-                          {formatTimeAgo(item.tanggal) ||
-                            "Waktu tidak tersedia"}
-                        </span>
-                      </div>
-                      <div className="flex items-center text-gray-500 text-sm">
-                        <Loader className="w-4 h-4 mr-2 shrink-0 text-gray-400" />
-                        <span className={`cn`}>
-                          {item.status || "Status tidak tersedia"}
-                        </span>
-                      </div>
-                    </div>
-                    {item.deskripsi && (
-                      <p className="text-xs text-gray-400 mt-3 line-clamp-2">
-                        {item.deskripsi}
-                      </p>
                     )}
+
+                    <div className="absolute top-3 left-3">
+                      <span
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-md ${
+                          item.tipe_laporan === "hilang"
+                            ? "bg-red-500/90 text-white"
+                            : "bg-emerald-500/90 text-white"
+                        }`}
+                      >
+                        {item.tipe_laporan === "hilang"
+                          ? "DICARI"
+                          : "DITEMUKAN"}
+                      </span>
+                    </div>
                   </div>
-                  <button className="w-full cursor-pointer py-3 bg-linear-to-r from-stone-50 to-teal-50 text-stone-600 rounded-xl font-medium hover:from-stone-600 hover:to-teal-600 hover:text-white transition-all duration-300 flex items-center justify-center group/btn shadow-sm hover:shadow-md">
-                    <span>Lihat Detail</span>
-                    <ChevronRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
-                  </button>
+
+                  {/* Card Content */}
+                  <div className="p-5 flex flex-col grow">
+                    <div className="mb-4 grow">
+                      <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-2 group-hover:text-stone-600 transition-colors">
+                        {item.judul_laporan}
+                      </h3>
+                      <div className="space-y-2">
+                        <div className="flex items-start text-gray-600 text-sm">
+                          <MapPin className="w-4 h-4 mr-2 text-stone-500 shrink-0 mt-0.5" />
+                          <span className="line-clamp-1">
+                            {item.lokasi || "Lokasi tidak tersedia"}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-gray-500 text-sm">
+                          <Clock className="w-4 h-4 mr-2 shrink-0 text-gray-400" />
+                          <span>
+                            {formatDate(item.tanggal) || "Waktu tidak tersedia"}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-gray-500 text-sm">
+                          <Loader className="w-4 h-4 mr-2 shrink-0 text-gray-400" />
+                          <span className={`cn`}>
+                            {item.status || "Status tidak tersedia"}
+                          </span>
+                        </div>
+                      </div>
+                      {item.deskripsi && (
+                        <p className="text-xs text-gray-400 mt-3 line-clamp-2">
+                          {item.deskripsi}
+                        </p>
+                      )}
+                    </div>
+                    <button className="w-full cursor-pointer py-3 bg-linear-to-r from-stone-50 to-teal-50 text-stone-600 rounded-xl font-medium hover:from-stone-600 hover:to-teal-600 hover:text-white transition-all duration-300 flex items-center justify-center group/btn shadow-sm hover:shadow-md">
+                      <span>Lihat Detail</span>
+                      <ChevronRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Empty State */}
@@ -306,6 +361,17 @@ export default function LostAndFoundHome() {
             </div>
           )}
         </div>
+
+        {token && (
+          <button
+            onClick={() => setReportModalOpen(true)}
+            className="fixed bottom-6 right-6 md:bottom-8 md:right-10 px-4 sm:px-6 py-2 flex cursor-pointer sm:py-2.5 bg-linear-to-r from-emerald-600 to-teal-600 text-white text-sm sm:text-base rounded-full font-medium hover:shadow-lg hover:scale-105 transition-all duration-200 overflow-hidden group"
+          >
+            <span className="absolute inset-0 bg-white/20 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300"></span>
+            <Plus className="w-5 h-5 mr-2 relative z-10" />
+            <span className="relative z-10">Lapor Barang</span>
+          </button>
+        )}
 
         <DetailBarangModal
           selectedItem={selectedItem}

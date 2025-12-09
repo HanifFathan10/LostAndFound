@@ -11,8 +11,12 @@ import {
   Phone,
   ImageOff,
   Check,
+  Camera,
+  Hash,
+  GraduationCap,
+  StickyNote,
 } from "lucide-react";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -20,7 +24,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { jwtDecode } from "jwt-decode";
 
 const DetailBarangModal = ({ selectedItem, onClose }) => {
-  const { formatTimeAgo, formatDate } = useFormatDate();
+  const { formatTimeAgo } = useFormatDate();
   const queryClient = useQueryClient();
 
   const token = localStorage.getItem("token");
@@ -35,6 +39,25 @@ const DetailBarangModal = ({ selectedItem, onClose }) => {
     return () => {
       document.body.style.overflow = "auto";
     };
+  }, [selectedItem]);
+
+  const fotoBuktiList = useMemo(() => {
+    const raw = selectedItem?.pengambilan?.foto_bukti;
+
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw;
+
+    if (typeof raw === "string") {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+        return [raw];
+        // eslint-disable-next-line no-unused-vars
+      } catch (e) {
+        return [raw];
+      }
+    }
+    return [];
   }, [selectedItem]);
 
   if (!selectedItem) return null;
@@ -53,7 +76,7 @@ const DetailBarangModal = ({ selectedItem, onClose }) => {
 
       await queryClient.invalidateQueries({ queryKey: ["barang-list"] });
 
-      toast.success(response.statusText, {
+      toast.success(response.data.status, {
         description: response.data.message,
         richColors: true,
         position: "top-center",
@@ -77,11 +100,21 @@ const DetailBarangModal = ({ selectedItem, onClose }) => {
     }
   };
 
+  const getThumbnailUrl = (url) => {
+    const validUrl = getImageUrl(url);
+
+    if (validUrl.includes("cloudinary.com")) {
+      return validUrl.replace("/upload/", "/upload/w_300,q_auto,f_auto/");
+    }
+
+    return validUrl;
+  };
+
   return createPortal(
     <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-100 p-4 animate-in fade-in duration-200">
       <div className="absolute inset-0" onClick={onClose} />
 
-      <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[90vh] md:h-[85vh] shadow-2xl flex flex-col md:flex-row relative z-10 overflow-hidden">
+      <div className="bg-white rounded-3xl w-full max-w-6xl max-h-[90vh] md:h-[85vh] shadow-2xl flex flex-col md:flex-row relative z-10 overflow-hidden">
         <button
           onClick={onClose}
           className="absolute cursor-pointer top-4 right-4 z-50 bg-white/80 hover:bg-white text-gray-800 p-2 rounded-full shadow-sm backdrop-blur-sm transition-colors"
@@ -130,7 +163,7 @@ const DetailBarangModal = ({ selectedItem, onClose }) => {
                   {selectedItem.status || "Barang Umum"}
                 </span>
                 <span className="text-gray-400 font-normal text-xs md:text-sm">
-                  {formatTimeAgo(selectedItem.created_at)}
+                  Postingan dibuat {formatTimeAgo(selectedItem.created_at)}
                 </span>
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight uppercase">
@@ -142,29 +175,29 @@ const DetailBarangModal = ({ selectedItem, onClose }) => {
               <InfoItem
                 icon={<MapPin className="w-5 h-5" />}
                 color="purple"
-                label="Lokasi"
+                label="Lokasi Terakhir"
                 value={selectedItem.lokasi}
               />
               <InfoItem
                 icon={<Calendar className="w-5 h-5 " />}
                 color="purple"
                 label="Tanggal Kejadian"
-                value={formatDate(selectedItem.tanggal)}
+                value={formatTimeAgo(selectedItem.tanggal)}
               />
               <InfoItem
                 icon={<User className="w-5 h-5" />}
                 color="purple"
                 label="Dilaporkan Oleh"
-                value={selectedItem.nama_lengkap || "Anonim"}
-                subValue={selectedItem.npm}
+                value={selectedItem.pelapor.nama || "Anonim"}
+                subValue={selectedItem.pelapor.npm}
               />
 
-              {selectedItem.nama_satpam && (
+              {selectedItem?.satpam?.nama && (
                 <InfoItem
                   icon={<Shield className="w-5 h-5" />}
                   color="purple"
                   label="Diamankan Oleh Satpam"
-                  value={selectedItem.nama_satpam}
+                  value={selectedItem.satpam.nama}
                 />
               )}
             </div>
@@ -179,6 +212,121 @@ const DetailBarangModal = ({ selectedItem, onClose }) => {
                 {selectedItem.deskripsi || "Tidak ada deskripsi tambahan."}
               </div>
             </div>
+
+            {selectedItem.pengambilan && (
+              <div className="mt-8">
+                <h3 className="font-bold text-gray-900 mb-4 flex items-center text-base md:text-lg border-b pb-2">
+                  Detail Pengambil Barang
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      Identitas Penerima
+                    </h4>
+
+                    <InfoItem
+                      icon={<User className="w-5 h-5" />}
+                      color="purple"
+                      label="Nama Pengambil"
+                      value={selectedItem.pengambilan?.nama_pengambil}
+                    />
+                    <InfoItem
+                      icon={<Hash className="w-5 h-5" />}
+                      color="purple"
+                      label="NPM"
+                      value={selectedItem.pengambilan?.npm_pengambil}
+                    />
+                    <InfoItem
+                      icon={<GraduationCap className="w-5 h-5" />}
+                      color="purple"
+                      label="Program Studi"
+                      value={selectedItem.pengambilan?.prodi_pengambil}
+                    />
+                    <InfoItem
+                      icon={<Phone className="w-5 h-5" />}
+                      color="purple"
+                      label="No. Handphone"
+                      value={selectedItem.pengambilan?.no_hp_pengambil}
+                    />
+                  </div>
+
+                  <div className="space-y-6">
+                    {/* BAGIAN FOTO BUKTI */}
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                          <Camera className="w-4 h-4" /> Bukti Foto
+                        </h4>
+                        {/* Badge jumlah foto jika lebih dari 1 */}
+                        {fotoBuktiList.length > 1 && (
+                          <span className="text-xs font-medium bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                            {fotoBuktiList.length} Foto
+                          </span>
+                        )}
+                      </div>
+
+                      {/* LOGIC TAMPILAN FOTO */}
+                      {fotoBuktiList.length === 0 ? (
+                        // CASE 0: Tidak ada foto
+                        <div className="w-full sm:w-56 aspect-square flex flex-col items-center justify-center text-gray-400 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                          <ImageOff className="w-10 h-10 mb-2 opacity-50" />
+                          <span className="text-xs font-medium text-gray-500">
+                            Tidak ada foto
+                          </span>
+                        </div>
+                      ) : fotoBuktiList.length === 1 ? (
+                        // CASE 1: Satu Foto (Tampilan Besar)
+                        <div className="relative w-full sm:w-64 aspect-square rounded-xl overflow-hidden border border-gray-200 shadow-sm group cursor-pointer bg-gray-100">
+                          <img
+                            src={getImageUrl(fotoBuktiList[0])}
+                            alt="Bukti 1"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
+                        </div>
+                      ) : (
+                        // CASE MULTIPLE: Horizontal Scroll (Tampilan Gallery)
+                        <div className="flex gap-3 overflow-x-auto pb-4 custom-scrollbar snap-x">
+                          {fotoBuktiList.map((foto, index) => (
+                            <div
+                              key={index}
+                              className="snap-start shrink-0 relative w-40 h-40 rounded-xl overflow-hidden border border-gray-200 shadow-sm group cursor-pointer bg-gray-100"
+                            >
+                              <img
+                                src={getThumbnailUrl(foto)}
+                                alt={`Bukti ${index + 1}`}
+                                loading="lazy"
+                                decoding="async"
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              />
+
+                              {/* Indikator angka */}
+                              <div className="absolute top-2 right-2 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded-md backdrop-blur-sm">
+                                {index + 1}/{fotoBuktiList.length}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* BAGIAN CATATAN */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <StickyNote className="w-4 h-4" /> Catatan
+                      </h4>
+                      <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-3 text-sm text-gray-700 leading-relaxed max-h-32 overflow-y-auto">
+                        {selectedItem.pengambilan?.catatan || (
+                          <span className="text-gray-400 italic">
+                            Tidak ada catatan tambahan.
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="p-4 flex gap-3 md:p-6 border-t border-gray-100 bg-white shrink-0 z-20">
@@ -201,7 +349,7 @@ const DetailBarangModal = ({ selectedItem, onClose }) => {
               </Link>
             )}
             {selectedItem.tipe_laporan === "ditemukan" &&
-            user.role === "Satpam" ? (
+            user?.role === "Satpam" ? (
               <Link
                 to={`${selectedItem.id_barang}/confirmation`}
                 target="_blank"
