@@ -331,7 +331,7 @@ const DetailBarangModal = ({ selectedItem, onClose }) => {
 
           <div className="p-4 flex gap-3 md:p-6 border-t border-gray-100 bg-white shrink-0 z-20">
             <Link
-              to={`https://api.whatsapp.com/send?phone=${selectedItem.no_hp}&text=Halo...`}
+              to={`https://api.whatsapp.com/send?phone=${selectedItem.pelapor.no_hp}&text=Halo ${selectedItem.pelapor.nama} saya ingin bertanya lebih lanjut perihal barang ${selectedItem.judul_laporan} yang di posting di Lost And Found KEMA UKRI.`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full bg-linear-to-r from-gray-600 to-stone-600 text-white px-2 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all flex items-center justify-center text-xs"

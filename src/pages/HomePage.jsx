@@ -17,7 +17,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import api from "@/lib/axios";
 import { getImageUrl } from "@/hooks/getImageUrl";
 import { useFormatDate } from "@/hooks/useFormatDate";
-
 import ReportModal from "@/components/modal/ReportModal";
 import DetailBarangModal from "@/components/modal/DetailBarangModal";
 import MetaData from "@/components/metadata";
@@ -198,7 +197,7 @@ export default function LostAndFoundHome() {
                 KEMA UKRI
               </span>
             </h2>
-            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg tracking-tighter leading-8 sm:text-xl text-gray-600 max-w-2xl mx-auto">
               Platform terpercaya untuk menemukan barang hilang atau melaporkan
               barang temuan area Universitas Kebangsaan Republik Indonesia
             </p>
